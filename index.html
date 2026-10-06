@@ -455,6 +455,9 @@
                     <a class="drawer-item" onclick="openBulkImportModal()">
                         <i class="bi bi-cloud-arrow-up text-primary"></i> Impor Data CSV
                     </a>
+                    <a class="drawer-item" id="drawerNavSettings" onclick="openSettingsModal()">
+                        <i class="bi bi-gear text-primary"></i> Pengaturan & Google Drive
+                    </a>
                 </div>
             </div>
 
@@ -517,6 +520,9 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2 d-none d-md-inline-flex align-items-center gap-1" id="btnHeaderSettings" onclick="openSettingsModal()" title="Konfigurasi Sistem & Google Drive">
+                            <i class="bi bi-gear"></i> <span class="small">Konfigurasi</span>
+                        </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2 d-none d-md-inline-flex align-items-center gap-1" onclick="openChangePasswordModal()" title="Ganti Kata Sandi">
                             <i class="bi bi-key"></i> <span class="small">Ganti Sandi</span>
                         </button>
@@ -554,6 +560,8 @@
                                     class="bi bi-file-earmark-word"></i> Impor Soal Docs</button>
                             <button class="btn btn-outline-primary pill-btn" onclick="openBulkImportModal()"><i
                                     class="bi bi-cloud-arrow-up"></i> Impor Data CSV</button>
+                            <button class="btn btn-outline-secondary pill-btn" id="dashBtnSettings" onclick="openSettingsModal()"><i
+                                    class="bi bi-gear"></i> Konfigurasi</button>
                         </div>
                     </div>
 
@@ -1452,6 +1460,78 @@
         </div>
     </div>
 
+    <!-- MODAL KONFIGURASI SISTEM & GOOGLE DRIVE -->
+    <div class="modal fade" id="modalSettings" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content card-custom">
+                <div class="modal-header py-2">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-gear-fill text-primary me-1"></i> Konfigurasi Sistem & Google Drive</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="handleSettingsSubmit(event)">
+                    <div class="modal-body p-3">
+                        <div class="alert alert-info py-2 px-3 small mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Pengaturan Cloud & Drive:</strong> Anda dapat mengarahkan folder penyimpanan gambar soal CBT dan modul materi ke folder Google Drive sekolah/bimbel dengan menempelkan <em>Folder ID</em> atau link URL folder.
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Nama Resmi Sekolah / Lembaga</label>
+                                <input type="text" id="cfgSchoolName" class="form-control form-control-sm" placeholder="Contoh: SMA Negeri 1 Prestasi" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Email Pengelola / Owner (Laporan PDF)</label>
+                                <input type="email" id="cfgOwnerEmail" class="form-control form-control-sm" placeholder="owner@sekolah.sch.id">
+                            </div>
+                        </div>
+
+                        <div class="card p-3 bg-light border mb-3">
+                            <div class="fw-bold small text-primary mb-2"><i class="bi bi-google me-1"></i> Folder Penyimpanan Google Drive</div>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">Folder Gambar Soal CBT (Folder ID / Link Drive)</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="bi bi-folder-symlink text-warning"></i></span>
+                                    <input type="text" id="cfgDriveQuestionFolderId" class="form-control form-control-sm" placeholder="Contoh: 1A2b3C4d... atau https://drive.google.com/drive/folders/...">
+                                </div>
+                                <small class="text-muted" style="font-size: 0.72rem;">Kosongkan jika ingin sistem membuat folder otomatis bernama 'Gambar_Soal_CBT'.</small>
+                            </div>
+
+                            <div class="mb-1">
+                                <label class="form-label small fw-semibold mb-1">Folder Modul Materi Belajar (Folder ID / Link Drive)</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="bi bi-folder-symlink text-primary"></i></span>
+                                    <input type="text" id="cfgDriveMaterialFolderId" class="form-control form-control-sm" placeholder="Contoh: 1X9y8Z7w... atau https://drive.google.com/drive/folders/...">
+                                </div>
+                                <small class="text-muted" style="font-size: 0.72rem;">Kosongkan jika ingin sistem membuat folder otomatis bernama 'Materi_LMS'.</small>
+                            </div>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Token WhatsApp Gateway (Foonte)</label>
+                                <input type="text" id="cfgFoonteToken" class="form-control form-control-sm" placeholder="Token API Foonte (Opsional)">
+                                <small class="text-muted" style="font-size: 0.72rem;">Digunakan untuk broadcast tagihan SPP & notifikasi alpha.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Tarif Standar SPP Bulanan (Rp)</label>
+                                <input type="number" id="cfgDefaultSpp" class="form-control form-control-sm" value="250000" min="0" step="5000">
+                                <small class="text-muted" style="font-size: 0.72rem;">Nominal default saat kasir membuka form pencatatan SPP.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" id="btnSaveSettings" class="btn btn-primary btn-sm fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Simpan Konfigurasi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL CETAK KUITANSI RESMI -->
     <div class="modal fade" id="modalReceipt" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
@@ -1968,6 +2048,30 @@
             if (func === 'generateReceiptPdf') {
                 return { success: false, message: 'Mode mock menggunakan pengunduh berkas mandiri.' };
             }
+            if (func === 'getSystemSettings') {
+                const s = JSON.parse(localStorage.getItem('edu_settings') || '{}');
+                return {
+                    success: true,
+                    data: {
+                        SCHOOL_NAME: s.SCHOOL_NAME || window.APP_BRAND_NAME || 'SMA Negeri 1 Prestasi',
+                        OWNER_EMAIL: s.OWNER_EMAIL || '',
+                        DRIVE_QUESTION_FOLDER_ID: s.DRIVE_QUESTION_FOLDER_ID || '',
+                        DRIVE_MATERIAL_FOLDER_ID: s.DRIVE_MATERIAL_FOLDER_ID || '',
+                        FOONTE_TOKEN: s.FOONTE_TOKEN || '',
+                        DEFAULT_SPP_AMOUNT: s.DEFAULT_SPP_AMOUNT || 250000
+                    }
+                };
+            }
+            if (func === 'saveSystemSettings') {
+                const [tok, p] = args;
+                const existing = JSON.parse(localStorage.getItem('edu_settings') || '{}');
+                const merged = Object.assign(existing, p);
+                localStorage.setItem('edu_settings', JSON.stringify(merged));
+                return { success: true, message: 'Konfigurasi sistem & Google Drive berhasil disimpan.' };
+            }
+            if (func === 'uploadQuestionImageToDrive') {
+                return { success: true, imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80', message: 'Simulasi unggah gambar berhasil!' };
+            }
             return { success: true, message: 'Operasi berhasil.' };
         }
 
@@ -2057,6 +2161,65 @@
             }
         }
 
+        async function openSettingsModal() {
+            try {
+                const res = await callBackend('getSystemSettings', AppState.token);
+                if (res.success && res.data) {
+                    const d = res.data;
+                    document.getElementById('cfgSchoolName').value = d.SCHOOL_NAME || window.APP_BRAND_NAME || '';
+                    document.getElementById('cfgOwnerEmail').value = d.OWNER_EMAIL || '';
+                    document.getElementById('cfgDriveQuestionFolderId').value = d.DRIVE_QUESTION_FOLDER_ID || '';
+                    document.getElementById('cfgDriveMaterialFolderId').value = d.DRIVE_MATERIAL_FOLDER_ID || '';
+                    document.getElementById('cfgFoonteToken').value = d.FOONTE_TOKEN || '';
+                    document.getElementById('cfgDefaultSpp').value = d.DEFAULT_SPP_AMOUNT || 250000;
+                }
+            } catch (err) {
+                console.warn('Gagal memuat settings, menggunakan konfigurasi lokal:', err);
+                document.getElementById('cfgSchoolName').value = window.APP_BRAND_NAME || '';
+            }
+            new bootstrap.Modal(document.getElementById('modalSettings')).show();
+        }
+
+        async function handleSettingsSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveSettings');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+            const cleanFolder = function (v) {
+                if (!v) return '';
+                const m = String(v).trim().match(/\/folders\/([a-zA-Z0-9-_]+)/);
+                return m ? m[1] : String(v).trim();
+            };
+
+            const payload = {
+                SCHOOL_NAME: document.getElementById('cfgSchoolName').value.trim(),
+                OWNER_EMAIL: document.getElementById('cfgOwnerEmail').value.trim(),
+                DRIVE_QUESTION_FOLDER_ID: cleanFolder(document.getElementById('cfgDriveQuestionFolderId').value),
+                DRIVE_MATERIAL_FOLDER_ID: cleanFolder(document.getElementById('cfgDriveMaterialFolderId').value),
+                FOONTE_TOKEN: document.getElementById('cfgFoonteToken').value.trim(),
+                DEFAULT_SPP_AMOUNT: Number(document.getElementById('cfgDefaultSpp').value) || 250000
+            };
+
+            try {
+                const res = await callBackend('saveSystemSettings', AppState.token, payload);
+                if (res.success) {
+                    window.APP_BRAND_NAME = payload.SCHOOL_NAME;
+                    showToast(res.message || 'Konfigurasi berhasil disimpan!', 'success');
+                    const modalEl = document.getElementById('modalSettings');
+                    const bsModal = bootstrap.Modal.getInstance(modalEl);
+                    if (bsModal) bsModal.hide();
+                } else {
+                    showToast(res.message || 'Gagal menyimpan konfigurasi.', 'danger');
+                }
+            } catch (err) {
+                showToast(err.message || 'Terjadi kesalahan sistem.', 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Simpan Konfigurasi';
+            }
+        }
+
         function renderLayout() {
             document.getElementById('authSection').classList.add('d-none');
             document.getElementById('appContainer').classList.remove('d-none');
@@ -2070,6 +2233,15 @@
             if (u.role !== 'ADMIN') {
                 if (document.getElementById('navUsers')) document.getElementById('navUsers').classList.add('d-none');
                 if (document.getElementById('drawerNavUsers')) document.getElementById('drawerNavUsers').classList.add('d-none');
+                if (document.getElementById('btnHeaderSettings')) document.getElementById('btnHeaderSettings').classList.add('d-none');
+                if (document.getElementById('drawerNavSettings')) document.getElementById('drawerNavSettings').classList.add('d-none');
+                if (document.getElementById('dashBtnSettings')) document.getElementById('dashBtnSettings').classList.add('d-none');
+            } else {
+                if (document.getElementById('navUsers')) document.getElementById('navUsers').classList.remove('d-none');
+                if (document.getElementById('drawerNavUsers')) document.getElementById('drawerNavUsers').classList.remove('d-none');
+                if (document.getElementById('btnHeaderSettings')) document.getElementById('btnHeaderSettings').classList.remove('d-none');
+                if (document.getElementById('drawerNavSettings')) document.getElementById('drawerNavSettings').classList.remove('d-none');
+                if (document.getElementById('dashBtnSettings')) document.getElementById('dashBtnSettings').classList.remove('d-none');
             }
             if (u.role === 'STUDENT') {
                 const cb = document.getElementById('cbtTeacherBar'), cs = document.getElementById('btnCatatSpp');
@@ -2872,7 +3044,7 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const base64 = e.target.result.split(',')[1];
-                const res = await callBackend('uploadQuestionImageToDrive', AppState.token, { fileName: file.name, mimeType: file.type, base64Content: base64 }, 'Gambar_Soal_CBT');
+                const res = await callBackend('uploadQuestionImageToDrive', AppState.token, { fileName: file.name, mimeType: file.type, base64Content: base64 }, '');
                 if (res.success && res.imageUrl) {
                     document.getElementById('qImgUrl').value = res.imageUrl;
                     showToast('Gambar terhubung!', 'success');
