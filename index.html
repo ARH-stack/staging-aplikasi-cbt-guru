@@ -564,6 +564,7 @@
                                 <span class="small text-muted text-uppercase fw-semibold"
                                     style="font-size: 0.72rem;">Siswa Hadir</span>
                                 <h2 class="fw-bold mt-1 text-success mb-0 fs-3 fs-md-2" id="statPresent">0</h2>
+                                <small class="text-muted" style="font-size: 0.68rem;" id="statPresentSub">Hari ini</small>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
@@ -571,6 +572,7 @@
                                 <span class="small text-muted text-uppercase fw-semibold"
                                     style="font-size: 0.72rem;">Alpha / Izin</span>
                                 <h2 class="fw-bold mt-1 text-danger mb-0 fs-3 fs-md-2" id="statAlpha">0</h2>
+                                <small class="text-muted" style="font-size: 0.68rem;" id="statAlphaSub">Hari ini</small>
                             </div>
                         </div>
                         <div class="col-6 col-lg-3">
@@ -1895,6 +1897,9 @@
                     { UserID: 'USR-2', Name: 'Ricky Pratama', Username: 'siswa', Role: 'STUDENT', ClassID: 'X-IPA-1', ParentPhone: '081234567891', Status: 'ACTIVE' }
                 ]);
                 db.set('spp', [{ PaymentID: 'SPP-1', StudentID: 'USR-2', StudentName: 'Ricky Pratama', ClassID: 'X-IPA-1', Month: 'Oktober', Year: 2026, Amount: 250000, PaymentDate: '2026-10-04', PaymentMethod: 'TUNAI', Status: 'LUNAS', ReceiptNumber: 'KW-202610-1001', RecordedBy: 'Admin' }]);
+                db.set('attendance', [{ AttendanceID: 'ATT-1', StudentID: 'USR-2', StudentName: 'Ricky Pratama', ClassID: 'X-IPA-1', Date: new Date().toISOString().substring(0, 10), Status: 'HADIR', CheckInTime: '07:15', Method: 'WEB' }]);
+                db.set('schedules', [{ ScheduleID: 'SCH-1', Day: 'SENIN', Subject: 'Matematika Peminatan', ClassID: 'X-IPA-1', TeacherName: 'Budi Santoso, M.Pd', TimeSlot: '07.00 - 08.30', Room: 'R-101' }]);
+                db.set('exams', [{ ExamID: 'EXM-1', Title: 'Penilaian Harian Matematika', Subject: 'Matematika Peminatan', ClassID: 'X-IPA-1', Status: 'PUBLISHED', Duration: 60, TotalQuestions: 5 }]);
                 localStorage.setItem('edu_init', '1');
             }
             if (func === 'authenticateUser') {
@@ -1909,13 +1914,48 @@
                 return { success: true, data: list, metrics: { totalCollected: collected, paidCount: list.filter(x => x.Status === 'LUNAS').length, unpaidCount: 0, defaultSppAmount: 250000 } };
             }
             if (func === 'getDashboardMetrics') {
-                const list = db.get('spp');
+                const list = db.get('spp') || [];
+                const attList = db.get('attendance') || [];
+                const examList = db.get('exams') || [];
+                const matList = db.get('materials') || [];
+                const todayStr = new Date().toISOString().substring(0, 10);
+
+                let present = attList.filter(a => String(a.Date || '').substring(0, 10) === todayStr && a.Status === 'HADIR').length;
+                let alpha = attList.filter(a => String(a.Date || '').substring(0, 10) === todayStr && (a.Status === 'ALPHA' || a.Status === 'IZIN')).length;
+                let isFallback = false;
+                let sDate = todayStr;
+
+                if (present === 0 && alpha === 0 && attList.length > 0) {
+                    const dates = [...new Set(attList.map(a => String(a.Date || '').substring(0, 10)).filter(Boolean))].sort().reverse();
+                    if (dates.length > 0) {
+                        sDate = dates[0];
+                        present = attList.filter(a => String(a.Date || '').substring(0, 10) === sDate && a.Status === 'HADIR').length;
+                        alpha = attList.filter(a => String(a.Date || '').substring(0, 10) === sDate && (a.Status === 'ALPHA' || a.Status === 'IZIN')).length;
+                        isFallback = true;
+                    }
+                }
+
                 const collected = list.filter(x => x.Status === 'LUNAS').reduce((a, c) => a + (Number(c.Amount) || 0), 0);
-                return { success: true, metrics: { todayPresent: 1, todayAlpha: 0, activeExams: 0, sppCollected: collected } };
+                return {
+                    success: true,
+                    metrics: {
+                        todayPresent: present,
+                        todayAlpha: alpha,
+                        isLatestSession: isFallback,
+                        sessionDate: sDate,
+                        activeExams: examList.filter(e => e.Status === 'PUBLISHED').length,
+                        totalMaterials: matList.length,
+                        sppCollected: collected
+                    }
+                };
             }
             if (func === 'getAppData') {
                 const [tok, view, p] = args;
                 if (view === 'STUDENTS_BY_CLASS') return { success: true, data: db.get('users').filter(u => u.Role === 'STUDENT') };
+                if (view === 'SCHEDULES') {
+                    const allSch = db.get('schedules') || [];
+                    return { success: true, data: p ? allSch.filter(s => s.Day === p) : allSch };
+                }
                 return { success: true, data: db.get(view.toLowerCase()) };
             }
             if (func === 'executeBulkImportBatch' || func === 'executeStressTestBatch') {
@@ -2093,6 +2133,18 @@
                     document.getElementById('statAlpha').textContent = m.todayAlpha || 0;
                     document.getElementById('statExams').textContent = m.activeExams || 0;
                     document.getElementById('statSpp').textContent = 'Rp ' + Number(m.sppCollected || 0).toLocaleString('id-ID');
+
+                    const pSub = document.getElementById('statPresentSub');
+                    const aSub = document.getElementById('statAlphaSub');
+                    if (pSub && aSub) {
+                        if (m.isLatestSession) {
+                            pSub.textContent = 'Sesi: ' + (m.sessionDate || 'Terakhir');
+                            aSub.textContent = 'Sesi: ' + (m.sessionDate || 'Terakhir');
+                        } else {
+                            pSub.textContent = 'Hari ini';
+                            aSub.textContent = 'Hari ini';
+                        }
+                    }
                 }
 
                 // Load Jadwal Hari Ini
